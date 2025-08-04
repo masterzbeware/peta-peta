@@ -1,0 +1,137 @@
+-- ✅ Obsidian UI Setup
+local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
+local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local Window = Library:Window("ESP & Auto Collector", Color3.fromRGB(44, 120, 224), Enum.KeyCode.RightControl)
+
+-- 🎨 Warna Highlight
+local highlightColors = {
+    Key = Color3.fromRGB(255, 223, 0),
+    OfudaBox2 = Color3.fromRGB(0, 255, 255),
+    Safe = Color3.fromRGB(255, 0, 0),
+}
+
+-- 🧠 Highlight Utility
+local function highlightModel(model, color)
+    if model:FindFirstChild("ESP_Highlight") then return end
+    local hl = Instance.new("Highlight")
+    hl.Name = "ESP_Highlight"
+    hl.Adornee = model
+    hl.FillColor = color
+    hl.OutlineColor = Color3.new(1, 1, 1)
+    hl.FillTransparency = 0.25
+    hl.OutlineTransparency = 0
+    hl.Parent = model
+end
+
+local function removeHighlight(model)
+    local hl = model:FindFirstChild("ESP_Highlight")
+    if hl then hl:Destroy() end
+end
+
+-- 🔁 ESP Update
+local function updateESP(targetName, enabled)
+    local spawnedItems = workspace:FindFirstChild("Server") and workspace.Server:FindFirstChild("SpawnedItems")
+    if not spawnedItems then return end
+
+    for _, item in ipairs(spawnedItems:GetChildren()) do
+        if item:IsA("Model") and item.Name == targetName then
+            if enabled then
+                highlightModel(item, highlightColors[targetName])
+            else
+                removeHighlight(item)
+            end
+        end
+    end
+end
+
+-- 🔁 Safe ESP
+local function updateSafeESP(enabled)
+    local roomsFolder = workspace:FindFirstChild("Client")
+        and workspace.Client:FindFirstChild("Mirror")
+        and workspace.Client.Mirror:FindFirstChild("Rooms")
+    if not roomsFolder then return end
+
+    for _, room in pairs(roomsFolder:GetChildren()) do
+        if room:IsA("Model") then
+            local props = room:FindFirstChild("Props")
+            if props then
+                for _, item in pairs(props:GetChildren()) do
+                    if item:IsA("Model") and item.Name == "Safe" then
+                        if enabled then
+                            highlightModel(item, highlightColors.Safe)
+                        else
+                            removeHighlight(item)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- 🧲 Child Added ESP
+local spawnedItems = workspace:WaitForChild("Server"):WaitForChild("SpawnedItems")
+
+spawnedItems.ChildAdded:Connect(function(child)
+    task.wait(0.1)
+    if child:IsA("Model") then
+        if Toggles.ESP_Key and child.Name == "Key" then
+            highlightModel(child, highlightColors.Key)
+        elseif Toggles.ESP_Box and child.Name == "OfudaBox2" then
+            highlightModel(child, highlightColors.OfudaBox2)
+        end
+    end
+end)
+
+-- 🧲 Safe Room Added
+workspace.Client.Mirror.Rooms.ChildAdded:Connect(function(room)
+    task.wait(0.2)
+    if room:IsA("Model") and Toggles.ESP_Safe then
+        local props = room:FindFirstChild("Props")
+        if props then
+            for _, item in pairs(props:GetChildren()) do
+                if item:IsA("Model") and item.Name == "Safe" then
+                    highlightModel(item, highlightColors.Safe)
+                end
+            end
+        end
+    end
+end)
+
+-- 🔁 Auto Coin Collector
+local autoCollect = false
+
+task.spawn(function()
+    while task.wait(1) do
+        if autoCollect then
+            for _, coin in ipairs(spawnedItems:GetChildren()) do
+                if coin:IsA("Model") and coin.Name == "Zeni_1" then
+                    local point = coin:FindFirstChild("InteractionPoint")
+                    if point and point:FindFirstChildOfClass("ProximityPrompt") then
+                        local prompt = point:FindFirstChildOfClass("ProximityPrompt")
+                        fireproximityprompt(prompt)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- 🎚️ UI Toggles
+Window:Toggle("ESP Key", {default = true}, function(state)
+    updateESP("Key", state)
+end)
+
+Window:Toggle("ESP OfudaBox2", {default = true}, function(state)
+    updateESP("OfudaBox2", state)
+end)
+
+Window:Toggle("ESP Safe", {default = true}, function(state)
+    updateSafeESP(state)
+end)
+
+Window:Toggle("Auto Collect Coin", {default = true}, function(state)
+    autoCollect = state
+end)
+
+Window:Label("RightCtrl untuk buka/tutup UI")
