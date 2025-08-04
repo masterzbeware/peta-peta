@@ -1,18 +1,34 @@
 -- ✅ Obsidian UI Setup
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
-local Window = Library:Window("ESP & Auto Collector", Color3.fromRGB(44, 120, 224), Enum.KeyCode.RightControl)
 
--- 🎨 Warna Highlight
+Library.ForceCheckbox = false
+Library.ShowToggleFrameInKeybinds = true
+
+local Window = Library:CreateWindow({
+    Title = "Bug Hunter",
+    Footer = "by MasterZ",
+    Icon = 0,
+    NotifySide = "Right",
+    ShowCustomCursor = true,
+})
+
+-- ✅ Tabs & GroupBox
+local Tabs = {
+    Main = Window:AddTab("Main", "bug"),
+}
+local ESPBox = Tabs.Main:AddLeftGroupbox("ESP & Coin")
+
+-- ✅ Warna untuk tiap ESP
 local highlightColors = {
     Key = Color3.fromRGB(255, 223, 0),
     OfudaBox2 = Color3.fromRGB(0, 255, 255),
     Safe = Color3.fromRGB(255, 0, 0),
 }
 
--- 🧠 Highlight Utility
+-- ✅ Fungsi ESP
 local function highlightModel(model, color)
-    if model:FindFirstChild("ESP_Highlight") then return end
+    if not model or model:FindFirstChild("ESP_Highlight") then return end
     local hl = Instance.new("Highlight")
     hl.Name = "ESP_Highlight"
     hl.Adornee = model
@@ -28,36 +44,90 @@ local function removeHighlight(model)
     if hl then hl:Destroy() end
 end
 
--- 🔁 ESP Update
-local function updateESP(targetName, enabled)
-    local spawnedItems = workspace:FindFirstChild("Server") and workspace.Server:FindFirstChild("SpawnedItems")
-    if not spawnedItems then return end
+-- ✅ Toggle: ESP Key
+ESPBox:AddToggle("ESPKey", {
+    Text = "ESP Key",
+    Default = false,
+    Callback = function(state)
+        local spawnedItems = workspace:FindFirstChild("Server") and workspace.Server:FindFirstChild("SpawnedItems")
+        if not spawnedItems then return end
 
-    for _, item in ipairs(spawnedItems:GetChildren()) do
-        if item:IsA("Model") and item.Name == targetName then
-            if enabled then
-                highlightModel(item, highlightColors[targetName])
-            else
-                removeHighlight(item)
+        for _, model in ipairs(spawnedItems:GetChildren()) do
+            if model:IsA("Model") and model.Name == "Key" then
+                if state then
+                    highlightModel(model, highlightColors.Key)
+                else
+                    removeHighlight(model)
+                end
             end
         end
+
+        if not _G.ESPKeyConnection then
+            _G.ESPKeyConnection = spawnedItems.ChildAdded:Connect(function(child)
+                if child:IsA("Model") and child.Name == "Key" and Toggles.ESPKey.Value then
+                    task.wait(0.1)
+                    highlightModel(child, highlightColors.Key)
+                end
+            end)
+        end
+
+        if not state and _G.ESPKeyConnection then
+            _G.ESPKeyConnection:Disconnect()
+            _G.ESPKeyConnection = nil
+        end
     end
-end
+})
 
--- 🔁 Safe ESP
-local function updateSafeESP(enabled)
-    local roomsFolder = workspace:FindFirstChild("Client")
-        and workspace.Client:FindFirstChild("Mirror")
-        and workspace.Client.Mirror:FindFirstChild("Rooms")
-    if not roomsFolder then return end
+-- ✅ Toggle: ESP Box
+ESPBox:AddToggle("ESPBox", {
+    Text = "ESP Box",
+    Default = false,
+    Callback = function(state)
+        local spawnedItems = workspace:FindFirstChild("Server") and workspace.Server:FindFirstChild("SpawnedItems")
+        if not spawnedItems then return end
 
-    for _, room in pairs(roomsFolder:GetChildren()) do
-        if room:IsA("Model") then
+        for _, model in ipairs(spawnedItems:GetChildren()) do
+            if model:IsA("Model") and model.Name == "OfudaBox2" then
+                if state then
+                    highlightModel(model, highlightColors.OfudaBox2)
+                else
+                    removeHighlight(model)
+                end
+            end
+        end
+
+        if not _G.ESPBoxConnection then
+            _G.ESPBoxConnection = spawnedItems.ChildAdded:Connect(function(child)
+                if child:IsA("Model") and child.Name == "OfudaBox2" and Toggles.ESPBox.Value then
+                    task.wait(0.1)
+                    highlightModel(child, highlightColors.OfudaBox2)
+                end
+            end)
+        end
+
+        if not state and _G.ESPBoxConnection then
+            _G.ESPBoxConnection:Disconnect()
+            _G.ESPBoxConnection = nil
+        end
+    end
+})
+
+-- ✅ Toggle: ESP Safe
+ESPBox:AddToggle("ESPSafe", {
+    Text = "ESP Safe",
+    Default = false,
+    Callback = function(state)
+        local roomsFolder = workspace:FindFirstChild("Client")
+            and workspace.Client:FindFirstChild("Mirror")
+            and workspace.Client.Mirror:FindFirstChild("Rooms")
+        if not roomsFolder then return end
+
+        for _, room in ipairs(roomsFolder:GetChildren()) do
             local props = room:FindFirstChild("Props")
             if props then
-                for _, item in pairs(props:GetChildren()) do
+                for _, item in ipairs(props:GetChildren()) do
                     if item:IsA("Model") and item.Name == "Safe" then
-                        if enabled then
+                        if state then
                             highlightModel(item, highlightColors.Safe)
                         else
                             removeHighlight(item)
@@ -66,72 +136,55 @@ local function updateSafeESP(enabled)
                 end
             end
         end
-    end
-end
 
--- 🧲 Child Added ESP
-local spawnedItems = workspace:WaitForChild("Server"):WaitForChild("SpawnedItems")
-
-spawnedItems.ChildAdded:Connect(function(child)
-    task.wait(0.1)
-    if child:IsA("Model") then
-        if Toggles.ESP_Key and child.Name == "Key" then
-            highlightModel(child, highlightColors.Key)
-        elseif Toggles.ESP_Box and child.Name == "OfudaBox2" then
-            highlightModel(child, highlightColors.OfudaBox2)
-        end
-    end
-end)
-
--- 🧲 Safe Room Added
-workspace.Client.Mirror.Rooms.ChildAdded:Connect(function(room)
-    task.wait(0.2)
-    if room:IsA("Model") and Toggles.ESP_Safe then
-        local props = room:FindFirstChild("Props")
-        if props then
-            for _, item in pairs(props:GetChildren()) do
-                if item:IsA("Model") and item.Name == "Safe" then
-                    highlightModel(item, highlightColors.Safe)
-                end
-            end
-        end
-    end
-end)
-
--- 🔁 Auto Coin Collector
-local autoCollect = false
-
-task.spawn(function()
-    while task.wait(1) do
-        if autoCollect then
-            for _, coin in ipairs(spawnedItems:GetChildren()) do
-                if coin:IsA("Model") and coin.Name == "Zeni_1" then
-                    local point = coin:FindFirstChild("InteractionPoint")
-                    if point and point:FindFirstChildOfClass("ProximityPrompt") then
-                        local prompt = point:FindFirstChildOfClass("ProximityPrompt")
-                        fireproximityprompt(prompt)
+        if not _G.SafeConnection then
+            _G.SafeConnection = roomsFolder.ChildAdded:Connect(function(room)
+                task.wait(0.2)
+                if Toggles.ESPSafe.Value and room:IsA("Model") then
+                    local props = room:FindFirstChild("Props")
+                    if props then
+                        for _, item in ipairs(props:GetChildren()) do
+                            if item:IsA("Model") and item.Name == "Safe" then
+                                highlightModel(item, highlightColors.Safe)
+                            end
+                        end
                     end
                 end
-            end
+            end)
+        end
+
+        if not state and _G.SafeConnection then
+            _G.SafeConnection:Disconnect()
+            _G.SafeConnection = nil
         end
     end
-end)
+})
 
--- 🎚️ UI Toggles
-Window:Toggle("ESP Key", {default = true}, function(state)
-    updateESP("Key", state)
-end)
-
-Window:Toggle("ESP OfudaBox2", {default = true}, function(state)
-    updateESP("OfudaBox2", state)
-end)
-
-Window:Toggle("ESP Safe", {default = true}, function(state)
-    updateSafeESP(state)
-end)
-
-Window:Toggle("Auto Collect Coin", {default = true}, function(state)
-    autoCollect = state
-end)
-
-Window:Label("RightCtrl untuk buka/tutup UI")
+-- ✅ Toggle: Auto Collect Coin
+ESPBox:AddToggle("AutoCoin", {
+    Text = "Auto Collect Coin",
+    Default = false,
+    Callback = function(state)
+        if state then
+            if not _G.CoinLoop then
+                _G.CoinLoop = true
+                task.spawn(function()
+                    local spawnedItems = workspace:WaitForChild("Server"):WaitForChild("SpawnedItems")
+                    while _G.CoinLoop and task.wait(1) do
+                        for _, model in ipairs(spawnedItems:GetChildren()) do
+                            if model:IsA("Model") and model.Name == "Zeni_1" then
+                                local ip = model:FindFirstChild("InteractionPoint")
+                                local prompt = ip and ip:FindFirstChildOfClass("ProximityPrompt")
+                                if prompt then
+                                    fireproximityprompt(prompt)
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        else
+            _G.CoinLoop = false
+        end
+    end
+})
