@@ -13,20 +13,23 @@ local Window = Library:CreateWindow({
     ShowCustomCursor = true,
 })
 
--- ✅ Tabs & GroupBox
+-- ✅ Tabs & GroupBoxes
 local Tabs = {
     Main = Window:AddTab("Main", "bug"),
 }
-local ESPBox = Tabs.Main:AddLeftGroupbox("ESP & Coin")
 
--- ✅ Warna untuk tiap ESP
+local ESPBox = Tabs.Main:AddLeftGroupbox("ESP & Coin")
+local AutoBox = Tabs.Main:AddRightGroupbox("Auto Farm")
+
+-- ✅ Warna untuk ESP
 local highlightColors = {
-    Key = Color3.fromRGB(255, 223, 0), -- digunakan juga untuk Coin
+    Key = Color3.fromRGB(255, 223, 0),
     OfudaBox2 = Color3.fromRGB(0, 255, 255),
     Safe = Color3.fromRGB(255, 0, 0),
+    Coin = Color3.fromRGB(255, 255, 255),
 }
 
--- ✅ Fungsi ESP
+-- ✅ Highlight Function
 local function highlightModel(model, color)
     if not model or model:FindFirstChild("ESP_Highlight") then return end
     local hl = Instance.new("Highlight")
@@ -44,7 +47,7 @@ local function removeHighlight(model)
     if hl then hl:Destroy() end
 end
 
--- ✅ Toggle: ESP Key
+-- ✅ ESP: Key
 ESPBox:AddToggle("ESPKey", {
     Text = "ESP Key",
     Default = false,
@@ -54,11 +57,8 @@ ESPBox:AddToggle("ESPKey", {
 
         for _, model in ipairs(spawnedItems:GetChildren()) do
             if model:IsA("Model") and model.Name == "Key" then
-                if state then
-                    highlightModel(model, highlightColors.Key)
-                else
-                    removeHighlight(model)
-                end
+                if state then highlightModel(model, highlightColors.Key)
+                else removeHighlight(model) end
             end
         end
 
@@ -78,9 +78,9 @@ ESPBox:AddToggle("ESPKey", {
     end
 })
 
--- ✅ Toggle: ESP Box
+-- ✅ ESP: OfudaBox2
 ESPBox:AddToggle("ESPBox", {
-    Text = "ESP Box",
+    Text = "ESP OfudaBox2",
     Default = false,
     Callback = function(state)
         local spawnedItems = workspace:FindFirstChild("Server") and workspace.Server:FindFirstChild("SpawnedItems")
@@ -88,11 +88,8 @@ ESPBox:AddToggle("ESPBox", {
 
         for _, model in ipairs(spawnedItems:GetChildren()) do
             if model:IsA("Model") and model.Name == "OfudaBox2" then
-                if state then
-                    highlightModel(model, highlightColors.OfudaBox2)
-                else
-                    removeHighlight(model)
-                end
+                if state then highlightModel(model, highlightColors.OfudaBox2)
+                else removeHighlight(model) end
             end
         end
 
@@ -112,7 +109,7 @@ ESPBox:AddToggle("ESPBox", {
     end
 })
 
--- ✅ Toggle: ESP Safe
+-- ✅ ESP: Safe
 ESPBox:AddToggle("ESPSafe", {
     Text = "ESP Safe",
     Default = false,
@@ -127,11 +124,8 @@ ESPBox:AddToggle("ESPSafe", {
             if props then
                 for _, item in ipairs(props:GetChildren()) do
                     if item:IsA("Model") and item.Name == "Safe" then
-                        if state then
-                            highlightModel(item, highlightColors.Safe)
-                        else
-                            removeHighlight(item)
-                        end
+                        if state then highlightModel(item, highlightColors.Safe)
+                        else removeHighlight(item) end
                     end
                 end
             end
@@ -160,43 +154,24 @@ ESPBox:AddToggle("ESPSafe", {
     end
 })
 
--- ✅ Toggle: ESP Coin (Zeni_1, Zeni_2, Zeni_3)
+-- ✅ ESP Coin (Zeni_1 ~ Zeni_3)
 ESPBox:AddToggle("ESPCoin", {
     Text = "ESP Coin (Zeni_1~3)",
     Default = false,
     Callback = function(state)
-        local spawnedItems = workspace:FindFirstChild("Server") and workspace.Server:FindFirstChild("SpawnedItems")
-        if not spawnedItems then return end
-
+        local spawnedItems = workspace:FindFirstChild("Server"):FindFirstChild("SpawnedItems")
         for _, model in ipairs(spawnedItems:GetChildren()) do
             if model:IsA("Model") and (model.Name == "Zeni_1" or model.Name == "Zeni_2" or model.Name == "Zeni_3") then
-                if state then
-                    highlightModel(model, highlightColors.Key)
-                else
-                    removeHighlight(model)
-                end
+                if state then highlightModel(model, highlightColors.Coin)
+                else removeHighlight(model) end
             end
-        end
-
-        if not _G.ESPCoinConnection then
-            _G.ESPCoinConnection = spawnedItems.ChildAdded:Connect(function(child)
-                if child:IsA("Model") and (child.Name == "Zeni_1" or child.Name == "Zeni_2" or child.Name == "Zeni_3") and Toggles.ESPCoin.Value then
-                    task.wait(0.1)
-                    highlightModel(child, highlightColors.Key)
-                end
-            end)
-        end
-
-        if not state and _G.ESPCoinConnection then
-            _G.ESPCoinConnection:Disconnect()
-            _G.ESPCoinConnection = nil
         end
     end
 })
 
--- ✅ Toggle: Auto Collect Coin with Teleport (Zeni_1, Zeni_2, Zeni_3)
+-- ✅ Auto Coin: Teleport + Interact
 ESPBox:AddToggle("AutoCoin", {
-    Text = "Auto Collect Coin (Teleport Zeni_1~3)",
+    Text = "Auto Collect Coin (Zeni_1~3 + TP)",
     Default = false,
     Callback = function(state)
         if state then
@@ -205,16 +180,15 @@ ESPBox:AddToggle("AutoCoin", {
                 task.spawn(function()
                     local player = game.Players.LocalPlayer
                     local spawnedItems = workspace:WaitForChild("Server"):WaitForChild("SpawnedItems")
-
                     while _G.CoinLoop and task.wait(1) do
                         for _, model in ipairs(spawnedItems:GetChildren()) do
                             if model:IsA("Model") and (model.Name == "Zeni_1" or model.Name == "Zeni_2" or model.Name == "Zeni_3") then
                                 local ip = model:FindFirstChild("InteractPoint")
                                 local prompt = ip and ip:FindFirstChild("ItemInteractP")
-                                if prompt and prompt:IsA("ProximityPrompt") then
-                                    local character = player.Character or player.CharacterAdded:Wait()
-                                    if character and character:FindFirstChild("HumanoidRootPart") then
-                                        character:PivotTo(model:GetPivot())
+                                if prompt then
+                                    local char = player.Character or player.CharacterAdded:Wait()
+                                    if char and char:FindFirstChild("HumanoidRootPart") then
+                                        char:PivotTo(model:GetPivot())
                                         task.wait(0.2)
                                         fireproximityprompt(prompt)
                                     end
@@ -226,6 +200,72 @@ ESPBox:AddToggle("AutoCoin", {
             end
         else
             _G.CoinLoop = false
+        end
+    end
+})
+
+-- ✅ Auto Farm: Key → Equip → OfudaBox2
+AutoBox:AddToggle("AutoFarm", {
+    Text = "Auto Farm Key → OfudaBox2",
+    Default = false,
+    Callback = function(state)
+        if state then
+            if not _G.AutoFarmLoop then
+                _G.AutoFarmLoop = true
+                task.spawn(function()
+                    local player = game.Players.LocalPlayer
+                    local char = player.Character or player.CharacterAdded:Wait()
+                    local rs = game:GetService("ReplicatedStorage")
+                    local serverItems = workspace:WaitForChild("Server"):WaitForChild("SpawnedItems")
+
+                    while _G.AutoFarmLoop and task.wait(1.5) do
+                        -- Step 1: Key
+                        local keyModel = nil
+                        for _, item in ipairs(serverItems:GetChildren()) do
+                            if item:IsA("Model") and item.Name == "Key" then
+                                keyModel = item
+                                break
+                            end
+                        end
+
+                        if keyModel then
+                            local ip = keyModel:FindFirstChild("InteractPoint")
+                            local prompt = ip and ip:FindFirstChild("ItemInteractP")
+                            if prompt and char and char:FindFirstChild("HumanoidRootPart") then
+                                char:PivotTo(keyModel:GetPivot())
+                                task.wait(0.3)
+                                fireproximityprompt(prompt)
+                                task.wait(0.3)
+                                -- Equip Key
+                                local args = {"Equip", "Key"}
+                                rs:WaitForChild("ToolBarEvent"):FireServer(unpack(args))
+                                task.wait(0.3)
+                            end
+                        end
+
+                        -- Step 2: OfudaBox2
+                        local boxModel = nil
+                        for _, item in ipairs(serverItems:GetChildren()) do
+                            if item:IsA("Model") and item.Name == "OfudaBox2" then
+                                boxModel = item
+                                break
+                            end
+                        end
+
+                        if boxModel then
+                            local ip = boxModel:FindFirstChild("InteractPoint")
+                            local prompt = ip and ip:FindFirstChild("ItemInteractP")
+                            if prompt and char and char:FindFirstChild("HumanoidRootPart") then
+                                char:PivotTo(boxModel:GetPivot())
+                                task.wait(0.3)
+                                fireproximityprompt(prompt)
+                            end
+                        end
+                    end
+                end)
+            end
+        else
+            _G.AutoFarmLoop = false
         end
     end
 })
