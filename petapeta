@@ -21,7 +21,7 @@ local Tabs = {
 local ESPBox = Tabs.Main:AddLeftGroupbox("ESP & Coin")
 local AutoBox = Tabs.Main:AddRightGroupbox("Auto Farm")
 
--- ✅ Warna untuk tiap ESP
+-- ✅ Warna ESP
 local highlightColors = {
     Key = Color3.fromRGB(255, 223, 0),
     OfudaBox2 = Color3.fromRGB(0, 255, 255),
@@ -29,7 +29,7 @@ local highlightColors = {
     Zeni = Color3.fromRGB(0, 255, 0),
 }
 
--- ✅ Fungsi ESP
+-- ✅ Fungsi Highlight ESP
 local function highlightModel(model, color)
     if not model or model:FindFirstChild("ESP_Highlight") then return end
     local hl = Instance.new("Highlight")
@@ -57,11 +57,8 @@ ESPBox:AddToggle("ESPKey", {
 
         for _, model in ipairs(spawnedItems:GetChildren()) do
             if model:IsA("Model") and model.Name == "Key" then
-                if state then
-                    highlightModel(model, highlightColors.Key)
-                else
-                    removeHighlight(model)
-                end
+                if state then highlightModel(model, highlightColors.Key)
+                else removeHighlight(model) end
             end
         end
 
@@ -91,11 +88,8 @@ ESPBox:AddToggle("ESPBox", {
 
         for _, model in ipairs(spawnedItems:GetChildren()) do
             if model:IsA("Model") and model.Name == "OfudaBox2" then
-                if state then
-                    highlightModel(model, highlightColors.OfudaBox2)
-                else
-                    removeHighlight(model)
-                end
+                if state then highlightModel(model, highlightColors.OfudaBox2)
+                else removeHighlight(model) end
             end
         end
 
@@ -130,11 +124,8 @@ ESPBox:AddToggle("ESPSafe", {
             if props then
                 for _, item in ipairs(props:GetChildren()) do
                     if item:IsA("Model") and item.Name == "Safe" then
-                        if state then
-                            highlightModel(item, highlightColors.Safe)
-                        else
-                            removeHighlight(item)
-                        end
+                        if state then highlightModel(item, highlightColors.Safe)
+                        else removeHighlight(item) end
                     end
                 end
             end
@@ -163,7 +154,7 @@ ESPBox:AddToggle("ESPSafe", {
     end
 })
 
--- ✅ Toggle: ESP Coin (Zeni_1,2,3)
+-- ✅ Toggle: ESP Coin
 ESPBox:AddToggle("ESPCoin", {
     Text = "ESP Coin",
     Default = false,
@@ -171,19 +162,16 @@ ESPBox:AddToggle("ESPCoin", {
         local spawnedItems = workspace:WaitForChild("Server"):WaitForChild("SpawnedItems")
         for _, model in ipairs(spawnedItems:GetChildren()) do
             if model:IsA("Model") and model.Name:match("Zeni_") then
-                if state then
-                    highlightModel(model, highlightColors.Zeni)
-                else
-                    removeHighlight(model)
-                end
+                if state then highlightModel(model, highlightColors.Zeni)
+                else removeHighlight(model) end
             end
         end
     end
 })
 
--- ✅ Toggle: Auto Collect Coin
+-- ✅ Toggle: Auto Collect Coin (Server Only)
 ESPBox:AddToggle("AutoCoin", {
-    Text = "Auto Collect Coin",
+    Text = "Auto Collect Coin (Server)",
     Default = false,
     Callback = function(state)
         if state then
@@ -194,7 +182,7 @@ ESPBox:AddToggle("AutoCoin", {
                     while _G.CoinLoop and task.wait(1) do
                         for _, model in ipairs(spawnedItems:GetChildren()) do
                             if model:IsA("Model") and model.Name:match("Zeni_") then
-                                local ip = model:FindFirstChild("InteractionPoint")
+                                local ip = model:FindFirstChild("InteractPoint")
                                 local prompt = ip and ip:FindFirstChildOfClass("ProximityPrompt")
                                 if prompt then
                                     game.Players.LocalPlayer.Character:PivotTo(model:GetPivot())
@@ -212,7 +200,58 @@ ESPBox:AddToggle("AutoCoin", {
     end
 })
 
--- ✅ Toggle: Auto Farm Key > OfudaBox2 > Ofuda
+-- ✅ Toggle: Auto Collect Coin (Room Props)
+AutoBox:AddToggle("AutoRoomZeni", {
+    Text = "Auto Room Coin",
+    Default = false,
+    Callback = function(state)
+        if state then
+            if not _G.RoomZeniLoop then
+                _G.RoomZeniLoop = true
+                task.spawn(function()
+                    local roomsFolder = workspace:FindFirstChild("Client") and workspace.Client:FindFirstChild("Mirror") and workspace.Client.Mirror:FindFirstChild("Rooms")
+                    local player = game.Players.LocalPlayer
+                    local char = player.Character or player.CharacterAdded:Wait()
+
+                    while _G.RoomZeniLoop and task.wait(1.5) do
+                        if not roomsFolder then continue end
+
+                        for _, room in ipairs(roomsFolder:GetChildren()) do
+                            local props = room:FindFirstChild("Props")
+                            if not props then continue end
+
+                            local shelf = props:FindFirstChild("Shelf")
+                            if not shelf then continue end
+
+                            for i = 1, 3 do
+                                local tana = shelf:FindFirstChild("tana"..i)
+                                if not tana then continue end
+
+                                for _, zeniModel in ipairs(tana:GetChildren()) do
+                                    if zeniModel:IsA("Model") and zeniModel.Name:match("Zeni_") then
+                                        local interactPoint = zeniModel:FindFirstChild("InteractPoint")
+                                        local prompt = interactPoint and interactPoint:FindFirstChild("ItemInteractP")
+
+                                        if prompt and char:FindFirstChild("HumanoidRootPart") then
+                                            char:PivotTo(zeniModel:GetPivot())
+                                            task.wait(0.2)
+                                            fireproximityprompt(prompt)
+                                            task.wait(0.5)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        else
+            _G.RoomZeniLoop = false
+        end
+    end
+})
+
+-- ✅ Toggle: Auto Farm (Key > Box > Ofuda)
 AutoBox:AddToggle("AutoFarm", {
     Text = "Auto Farm",
     Default = false,
@@ -272,7 +311,7 @@ AutoBox:AddToggle("AutoFarm", {
                             end
                         end
 
-                        -- Step 3: Ofuda muncul
+                        -- Step 3: Wait Ofuda
                         local ofudaModel
                         local waitTime = 5
                         while waitTime > 0 and not ofudaModel do
