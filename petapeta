@@ -160,23 +160,30 @@ ESPBox:AddToggle("ESPSafe", {
     end
 })
 
--- ✅ Toggle: Auto Collect Coin
+-- ✅ Toggle: Auto Collect Coin with Teleport (Zeni_1, Zeni_2, Zeni_3)
 ESPBox:AddToggle("AutoCoin", {
-    Text = "Auto Collect Coin",
+    Text = "Auto Collect Coin (Teleport Zeni_1~3)",
     Default = false,
     Callback = function(state)
         if state then
             if not _G.CoinLoop then
                 _G.CoinLoop = true
                 task.spawn(function()
+                    local player = game.Players.LocalPlayer
                     local spawnedItems = workspace:WaitForChild("Server"):WaitForChild("SpawnedItems")
+
                     while _G.CoinLoop and task.wait(1) do
                         for _, model in ipairs(spawnedItems:GetChildren()) do
-                            if model:IsA("Model") and model.Name == "Zeni_1" then
-                                local ip = model:FindFirstChild("InteractionPoint")
-                                local prompt = ip and ip:FindFirstChildOfClass("ProximityPrompt")
-                                if prompt then
-                                    fireproximityprompt(prompt)
+                            if model:IsA("Model") and (model.Name == "Zeni_1" or model.Name == "Zeni_2" or model.Name == "Zeni_3") then
+                                local ip = model:FindFirstChild("InteractPoint")
+                                local prompt = ip and ip:FindFirstChild("ItemInteractP")
+                                if prompt and prompt:IsA("ProximityPrompt") then
+                                    local character = player.Character or player.CharacterAdded:Wait()
+                                    if character and character:FindFirstChild("HumanoidRootPart") then
+                                        character:PivotTo(model:GetPivot())
+                                        task.wait(0.2)
+                                        fireproximityprompt(prompt)
+                                    end
                                 end
                             end
                         end
