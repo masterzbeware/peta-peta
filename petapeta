@@ -21,7 +21,7 @@ local ESPBox = Tabs.Main:AddLeftGroupbox("ESP & Coin")
 
 -- ✅ Warna untuk tiap ESP
 local highlightColors = {
-    Key = Color3.fromRGB(255, 223, 0),
+    Key = Color3.fromRGB(255, 223, 0), -- digunakan juga untuk Coin
     OfudaBox2 = Color3.fromRGB(0, 255, 255),
     Safe = Color3.fromRGB(255, 0, 0),
 }
@@ -156,6 +156,40 @@ ESPBox:AddToggle("ESPSafe", {
         if not state and _G.SafeConnection then
             _G.SafeConnection:Disconnect()
             _G.SafeConnection = nil
+        end
+    end
+})
+
+-- ✅ Toggle: ESP Coin (Zeni_1, Zeni_2, Zeni_3)
+ESPBox:AddToggle("ESPCoin", {
+    Text = "ESP Coin (Zeni_1~3)",
+    Default = false,
+    Callback = function(state)
+        local spawnedItems = workspace:FindFirstChild("Server") and workspace.Server:FindFirstChild("SpawnedItems")
+        if not spawnedItems then return end
+
+        for _, model in ipairs(spawnedItems:GetChildren()) do
+            if model:IsA("Model") and (model.Name == "Zeni_1" or model.Name == "Zeni_2" or model.Name == "Zeni_3") then
+                if state then
+                    highlightModel(model, highlightColors.Key)
+                else
+                    removeHighlight(model)
+                end
+            end
+        end
+
+        if not _G.ESPCoinConnection then
+            _G.ESPCoinConnection = spawnedItems.ChildAdded:Connect(function(child)
+                if child:IsA("Model") and (child.Name == "Zeni_1" or child.Name == "Zeni_2" or child.Name == "Zeni_3") and Toggles.ESPCoin.Value then
+                    task.wait(0.1)
+                    highlightModel(child, highlightColors.Key)
+                end
+            end)
+        end
+
+        if not state and _G.ESPCoinConnection then
+            _G.ESPCoinConnection:Disconnect()
+            _G.ESPCoinConnection = nil
         end
     end
 })
