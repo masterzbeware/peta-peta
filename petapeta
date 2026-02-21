@@ -52,10 +52,9 @@ do
 		tween:Create(instance, tweeninfo(duration, ...), properties):Play()
 	end
 
-	function utility:Wait()
-		run.RenderStepped:Wait()
-		return true
-	end
+function utility:Wait()
+	run.RenderStepped:Wait()
+end
 
 	function utility:Find(table, value) -- table.find doesn't work for dictionaries
 		for i, v in  pairs(table) do
@@ -96,7 +95,7 @@ do
 		utility:Tween(clone, {Size = object.Size}, 0.2)
 
 		coroutine.wrap(function()
-			wait(0.2)
+			task.wait(0.2)
 
 			object.ImageTransparency = 0
 			clone:Destroy()
@@ -143,17 +142,16 @@ do
 		}
 	end
 
-	function utility:KeyPressed() -- yield until next key is pressed
-		local key = input.InputBegan:Wait()
+function utility:KeyPressed()
+	local key
+	key = input.InputBegan:Wait()
 
-		while key.UserInputType ~= Enum.UserInputType.Keyboard	 do
-			key = input.InputBegan:Wait()
-		end
-
-		wait() -- overlapping connection
-
-		return key
+	while key.UserInputType ~= Enum.UserInputType.Keyboard do
+		key = input.InputBegan:Wait()
 	end
+
+	return key
+end
 
 	function utility:DraggingEnabled(frame, parent)
 
@@ -214,7 +212,7 @@ do
 	function library.new(title)
 		local container = utility:Create("ScreenGui", {
 			Name = title,
-			Parent = game.CoreGui
+			Parent = gethui and gethui() or game.CoreGui
 		}, {
 			utility:Create("ImageLabel", {
 				Name = "Main",
@@ -314,11 +312,16 @@ local lib = setmetatable({
 	pages = {}
 }, library)
 
-container.Main.TopBar.Minimize.MouseButton1Click:Connect(function()
+local btn = container.Main.TopBar.Minimize
+
+btn.MouseButton1Click:Connect(function()
 	lib:toggle()
 
-	local btn = container.Main.TopBar.Minimize
-	utility:Tween(btn, {Rotation = btn.Rotation == 0 and 180 or 0}, 0.2)
+	if lib.position then
+		btn.Rotation = 180 -- sedang minimized
+	else
+		btn.Rotation = 0 -- sedang normal
+	end
 end)
 
 return lib
@@ -465,56 +468,57 @@ return lib
 
 	-- functions
 
-	function library:setTheme(theme, color3)
-		themes[theme] = color3
+function library:setTheme(theme, color3)
+	themes[theme] = color3
 
-		for property, objects in pairs(objects[theme]) do
-			for i, object in pairs(objects) do
-				if not object.Parent or (object.Name == "Button" and object.Parent.Name == "ColorPicker") then
-					objects[i] = nil -- i can do this because weak tables :D
-				else
-					object[property] = color3
-				end
+	if not objects[theme] then
+		return
+	end
+
+	for property, objs in pairs(objects[theme]) do
+		for _, object in pairs(objs) do
+			if object and object.Parent then
+				object[property] = color3
 			end
 		end
 	end
+end
 
-	function library:toggle()
+function library:toggle()
 
-		if self.toggling then
-			return
-		end
-
-		self.toggling = true
-
-		local container = self.container.Main
-		local topbar = container.TopBar
-
-		if self.position then
-			utility:Tween(container, {
-				Size = UDim2.new(0, 511, 0, 428),
-				Position = self.position
-			}, 0.2)
-			wait(0.2)
-
-			container.ClipsDescendants = false
-			self.position = nil
-		else
-			self.position = container.Position
-			container.ClipsDescendants = true
-
-			utility:Tween(topbar, {Size = UDim2.new(1, 0, 0, 38)}, 0.2)
-			wait(0.2)
-
-utility:Tween(container, {
-	Size = UDim2.new(0, 511, 0, 38),
-	Position = self.position
-}, 0.2)
-			wait(0.2)
-		end
-
-		self.toggling = false
+	if self.toggling then
+		return
 	end
+
+	self.toggling = true
+
+	local container = self.container.Main
+
+	if self.position then
+		-- RESTORE
+		utility:Tween(container, {
+			Size = UDim2.new(0, 511, 0, 428),
+			Position = self.position
+		}, 0.2)
+
+		task.wait(0.2)
+		container.ClipsDescendants = false
+		self.position = nil
+
+	else
+		-- MINIMIZE
+		self.position = container.Position
+		container.ClipsDescendants = true
+
+		utility:Tween(container, {
+			Size = UDim2.new(0, 511, 0, 38)
+		}, 0.2)
+
+		task.wait(0.2)
+	end
+
+	self.toggling = false
+end
 
 	-- new modules
 
@@ -612,11 +616,12 @@ utility:Tween(container, {
 		local padding = 10
 		local textSize = game:GetService("TextService"):GetTextSize(text, 12, Enum.Font.Gotham, Vector2.new(math.huge, 16))
 
-		notification.Position = library.lastNotification or UDim2.new(0, padding, 1, -(notification.AbsoluteSize.Y + padding))
+		notification.Position = self.lastNotification 
+	or UDim2.new(0, padding, 1, -(notification.AbsoluteSize.Y + padding))
 		notification.Size = UDim2.new(0, 0, 0, 60)
 
 		utility:Tween(notification, {Size = UDim2.new(0, textSize.X + 70, 0, 60)}, 0.2)
-		wait(0.2)
+		task.wait(0.2)
 
 		notification.ClipsDescendants = false
 		utility:Tween(notification.Flash, {
@@ -635,17 +640,17 @@ utility:Tween(container, {
 			active = false
 			notification.ClipsDescendants = true
 
-			library.lastNotification = notification.Position
+			self.lastNotification = notification.Position
 			notification.Flash.Position = UDim2.new(0, 0, 0, 0)
 			utility:Tween(notification.Flash, {Size = UDim2.new(1, 0, 1, 0)}, 0.2)
 
-			wait(0.2)
+			task.wait(0.2)
 			utility:Tween(notification, {
 				Size = UDim2.new(0, 0, 0, 60),
 				Position = notification.Position + UDim2.new(0, textSize.X + 70, 0, 0)
 			}, 0.2)
 
-			wait(0.2)
+			task.wait(0.2)
 			notification:Destroy()
 		end
 
@@ -723,7 +728,7 @@ utility:Tween(container, {
 			text.TextSize = 0
 			utility:Tween(button.Title, {TextSize = 14}, 0.2)
 
-			wait(0.2)
+			task.wait(0.2)
 			utility:Tween(button.Title, {TextSize = 12}, 0.2)
 
 			if callback then
@@ -904,7 +909,7 @@ utility:Tween(container, {
 				Position = UDim2.new(1, -210, 0.5, -8)
 			}, 0.2)
 
-			wait()
+			task.wait()
 
 			input.TextXAlignment = Enum.TextXAlignment.Left
 			input:CaptureFocus()
@@ -1382,13 +1387,15 @@ utility:Tween(container, {
 			end
 		}
 
-		local callback = function(value)
-			if callback then
-				callback(value, function(...)
-					self:updateColorPicker(colorpicker, ...)
-				end)
-			end
-		end
+local userCallback = callback
+
+local function fire(value)
+	if userCallback then
+		userCallback(value, function(...)
+			self:updateColorPicker(colorpicker, ...)
+		end)
+	end
+end
 
 		utility:DraggingEnded(function()
 			draggingColor, draggingCanvas = false, false
@@ -1434,7 +1441,7 @@ utility:Tween(container, {
 						hue, sat, brightness = Color3.toHSV(color3)
 
 						self:updateColorPicker(colorpicker, nil, color3)
-						callback(color3)
+						fire(color3)
 					end
 				end)
 			end
@@ -1459,7 +1466,7 @@ utility:Tween(container, {
 				self:updateColorPicker(colorpicker, nil, {hue, sat, brightness}) -- roblox is literally retarded
 				utility:Tween(canvas.Cursor, {Position = UDim2.new(sat, 0, 1 - brightness, 0)}, 0.1) -- overwrite
 
-				callback(color3)
+				fire(color3)
 				utility:Wait()
 			end
 		end)
@@ -1480,7 +1487,7 @@ utility:Tween(container, {
 				self:updateColorPicker(colorpicker, nil, {hue, sat, brightness}) -- roblox is literally retarded
 				utility:Tween(tab.Container.Color.Select, {Position = UDim2.new(x, 0, 0, 0)}, 0.1) -- overwrite
 
-				callback(color3)
+				fire(color3)
 				utility:Wait()
 			end
 		end)
@@ -1489,7 +1496,7 @@ utility:Tween(container, {
 		local button = colorpicker.Button
 		local toggle, debounce, animate
 
-		lastColor = Color3.fromHSV(hue, sat, brightness)
+		local lastColor = Color3.fromHSV(hue, sat, brightness)
 		animate = function(visible, overwrite)
 
 			if overwrite then
@@ -1523,7 +1530,7 @@ utility:Tween(container, {
 				end
 
 				self.page.library.activePicker = animate
-				lastColor = Color3.fromHSV(hue, sat, brightness)
+				local lastColor = Color3.fromHSV(hue, sat, brightness)
 
 				local x1, x2 = button.AbsoluteSize.X / 2, 162--tab.AbsoluteSize.X
 				local px, py = button.AbsolutePosition.X, button.AbsolutePosition.Y
@@ -1536,7 +1543,7 @@ utility:Tween(container, {
 				utility:Tween(tab, {Size = UDim2.new(0, 162, 0, 169)}, 0.2)
 
 				-- update size and position
-				wait(0.2)
+				task.wait(0.2)
 				tab.ClipsDescendants = false
 
 				canvasSize, canvasPosition = canvas.AbsoluteSize, canvas.AbsolutePosition
@@ -1545,7 +1552,7 @@ utility:Tween(container, {
 				utility:Tween(tab, {Size = UDim2.new(0, 0, 0, 0)}, 0.2)
 				tab.ClipsDescendants = true
 
-				wait(0.2)
+				task.wait(0.2)
 				tab.Visible = false
 			end
 
@@ -1671,13 +1678,15 @@ utility:Tween(container, {
 		local value = default or min
 		local dragging, last
 
-		local callback = function(value)
-			if callback then
-				callback(value, function(...)
-					self:updateSlider(slider, ...)
-				end)
-			end
-		end
+local userCallback = callback
+
+local function fire(value)
+	if userCallback then
+		userCallback(value, function(...)
+			self:updateSlider(slider, ...)
+		end)
+	end
+end
 
 		self:updateSlider(slider, nil, value, min, max)
 
@@ -1692,19 +1701,19 @@ utility:Tween(container, {
 				utility:Tween(circle, {ImageTransparency = 0}, 0.1)
 
 				value = self:updateSlider(slider, nil, nil, min, max, value)
-				callback(value)
+				fire(value)
 
 				utility:Wait()
 			end
 
-			wait(0.5)
+			task.wait(0.5)
 			utility:Tween(circle, {ImageTransparency = 1}, 0.2)
 		end)
 
 		textbox.FocusLost:Connect(function()
 			if not tonumber(textbox.Text) then
 				value = self:updateSlider(slider, nil, default or min, min, max)
-				callback(value)
+				fire(value)
 			end
 		end)
 
@@ -1715,7 +1724,7 @@ utility:Tween(container, {
 				textbox.Text = text:sub(1, #text - 1)
 			elseif not allowed[text] then
 				value = self:updateSlider(slider, nil, tonumber(text) or value, min, max)
-				callback(value)
+				fire(value)
 			end
 		end)
 
@@ -1911,7 +1920,7 @@ utility:Tween(container, {
 				end
 			end
 
-			wait(0.1)
+			task.wait(0.1)
 			page.container.Visible = true
 
 			if focusedPage then
@@ -1927,17 +1936,17 @@ utility:Tween(container, {
 				end
 			end
 
-			wait(0.05)
+			task.wait(0.05)
 
 			for i, section in pairs(page.sections) do
 
 				utility:Tween(section.container.Title, {TextTransparency = 0}, 0.1)
 				section:Resize(true)
 
-				wait(0.05)
+				task.wait(0.05)
 			end
 
-			wait(0.05)
+			task.wait(0.05)
 			page:Resize(true)
 		else
 			-- page button
@@ -1954,7 +1963,7 @@ utility:Tween(container, {
 				utility:Tween(section.container.Title, {TextTransparency = 1}, 0.1)
 			end
 
-			wait(0.1)
+			task.wait(0.1)
 
 			page.lastPosition = page.container.CanvasPosition.Y
 			page:Resize()
@@ -1998,20 +2007,23 @@ utility:Tween(container, {
 		end
 	end
 
-	function section:getModule(info)
+function section:getModule(info)
 
-		if table.find(self.modules, info) then
-			return info
-		end
-
-		for i, module in pairs(self.modules) do
-			if (module:FindFirstChild("Title") or module:FindFirstChild("TextBox", true)).Text == info then
-				return module
-			end
-		end
-
-		error("No module found under "..tostring(info))
+	if table.find(self.modules, info) then
+		return info
 	end
+
+	for _, module in pairs(self.modules) do
+		local found = module:FindFirstChild("Title") 
+			or module:FindFirstChild("TextBox", true)
+
+		if found and found.Text == info then
+			return module
+		end
+	end
+
+	error("No module found under " .. tostring(info))
+end
 
 	-- updates
 
@@ -2041,7 +2053,7 @@ utility:Tween(container, {
 			Position = position[value] + UDim2.new(0, 0, 0, 2.5)
 		}, 0.2)
 
-		wait(0.1)
+		task.wait(0.1)
 		utility:Tween(frame, {
 			Size = UDim2.new(1, -22, 1, -4),
 			Position = position[value]
@@ -2132,12 +2144,14 @@ utility:Tween(container, {
 		local bar = slider.Slider.Bar
 		local percent = (mouse.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X
 
-		if value then -- support negative ranges
-			percent = (value - min) / (max - min)
-		end
+if value ~= nil then
+	percent = (value - min) / (max - min)
+end
 
 		percent = math.clamp(percent, 0, 1)
-		value = value or math.floor(min + (max - min) * percent)
+		if value == nil then
+    value = math.floor(min + (max - min) * percent)
+end
 
 		slider.TextBox.Text = value
 		utility:Tween(bar.Fill, {Size = UDim2.new(percent, 0, 1, 0)}, 0.1)
