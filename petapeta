@@ -292,15 +292,47 @@ do
 			})
 		})
 
-		utility:InitializeKeybind()
-		utility:DraggingEnabled(container.Main.TopBar, container.Main)
-
-		return setmetatable({
-			container = container,
-			pagesContainer = container.Main.Pages.Pages_Container,
-			pages = {}
-		}, library)
-	end
+    utility:InitializeKeybind()
+    utility:DraggingEnabled(container.Main.TopBar, container.Main)
+    
+    -- buat object library dulu
+    local lib = setmetatable({
+      container = container,
+      pagesContainer = container.Main.Pages.Pages_Container,
+      pages = {}
+    }, library)
+    
+    -- Floating Toggle Button
+    local floating = utility:Create("ImageButton", {
+      Name = "FloatingToggle",
+      Parent = container,
+      BackgroundTransparency = 1,
+      Size = UDim2.new(0, 50, 0, 50),
+      Position = UDim2.new(0, 30, 0.5, -25),
+      Image = "rbxassetid://5028857472",
+      ImageColor3 = themes.Accent,
+      ScaleType = Enum.ScaleType.Slice,
+      SliceCenter = Rect.new(2, 2, 298, 298),
+      ZIndex = 10
+    }, {
+      utility:Create("TextLabel", {
+        Name = "Text",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        Font = Enum.Font.GothamBold,
+        Text = "UI",
+        TextColor3 = themes.TextColor,
+        TextSize = 16
+      })
+    })
+    
+    utility:DraggingEnabled(floating)
+    
+    floating.MouseButton1Click:Connect(function()
+      lib:toggle()
+    end)
+    
+    return lib
 
 	function page.new(library, title, icon)
 		local button = utility:Create("TextButton", {
