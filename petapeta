@@ -270,6 +270,8 @@ local TweenService = cloneref(game:GetService('TweenService'));
 local RunService = cloneref(game:GetService('RunService'));
 local Players = cloneref(game:GetService('Players'));
 local UserInputService = cloneref(game:GetService('UserInputService'));
+-- MOBILE DETECT
+local isMobile = UserInputService.TouchEnabled
 local Client = Players.LocalPlayer;
 local Mouse = Client:GetMouse();
 local CurrentCamera = workspace.CurrentCamera;
@@ -6064,7 +6066,9 @@ function Fatality.new(Window: Window)
 			ResultFrame.BackgroundTransparency = 1.000
 			ResultFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 			ResultFrame.BorderSizePixel = 0
-			ResultFrame.Size = UDim2.new(1, 0, 0, 42)
+			ResultFrame.Size = isMobile
+	and UDim2.new(1, 0, 0, 34)
+	or UDim2.new(1, 0, 0, 42)
 			ResultFrame.ZIndex = 103
 
 			UICorner.CornerRadius = UDim.new(0, 4)
@@ -6082,7 +6086,7 @@ function Fatality.new(Window: Window)
 			FeatureName.FontFace = Fatality.FontSemiBold
 			FeatureName.Text = Name
 			FeatureName.TextColor3 = Color3.fromRGB(255, 255, 255)
-			FeatureName.TextSize = 14.000
+			FeatureName.TextSize = isMobile and 12 or 14
 			FeatureName.TextXAlignment = Enum.TextXAlignment.Left
 
 			FeaturePath.Name = Fatality:RandomString()
@@ -6097,7 +6101,7 @@ function Fatality.new(Window: Window)
 			FeaturePath.FontFace = Fatality.FontSemiBold
 			FeaturePath.Text = Path
 			FeaturePath.TextColor3 = Color3.fromRGB(255, 255, 255)
-			FeaturePath.TextSize = 12.000
+			FeaturePath.TextSize = isMobile and 10 or 12
 			FeaturePath.TextTransparency = 0.500
 			FeaturePath.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -6214,7 +6218,9 @@ function Fatality.new(Window: Window)
 		backpack.BackgroundTransparency = 1.000
 		backpack.BorderSizePixel = 0
 		backpack.LayoutOrder = 9
-		backpack.Size = UDim2.new(1, 0, 0, 56)
+		backpack.Size = isMobile
+	and UDim2.new(1, 0, 0, 48)
+	or UDim2.new(1, 0, 0, 56)
 		backpack.AutoButtonColor = false
 
 		UICorner.CornerRadius = UDim.new(0, 10)
@@ -6274,7 +6280,9 @@ function Fatality.new(Window: Window)
 		IntegrationIcon.Name = "IntegrationIcon"
 		IntegrationIcon.Parent = IntegrationIconFrame
 		IntegrationIcon.BackgroundTransparency = 1.000
-		IntegrationIcon.Size = UDim2.new(0, 36, 0, 36)
+		IntegrationIcon.Size = isMobile
+	and UDim2.new(0, 30, 0, 30)
+	or UDim2.new(0, 36, 0, 36)
 		IntegrationIcon.Image = "http://www.roblox.com/asset/?id=11290237405"
 		IntegrationIcon.ImageColor3 = Color3.fromRGB(247, 247, 248)
 
@@ -6440,7 +6448,7 @@ function Fatality:Loader(Config: Loader)
 		ASCII.Font = Enum.Font.GothamBold
 		ASCII.Text = TEXT
 		ASCII.TextColor3 = Color3.fromRGB(255, 255, 255)
-		ASCII.TextSize = 50.000
+		ASCII.TextSize = isMobile and 35 or 50
 		ASCII.TextWrapped = true
 
 		local textsize = Fatality:GetTextSize(ASCII);
@@ -6497,7 +6505,7 @@ function Fatality:Loader(Config: Loader)
 		StartText.Font = Enum.Font.GothamBold
 		StartText.Text = Config.Name:sub(1,1)
 		StartText.TextColor3 = Color3.fromRGB(255, 255, 255)
-		StartText.TextSize = 50.000
+		StartText.TextSize = isMobile and 35 or 50
 		StartText.TextWrapped = true
 		StartText.TextTransparency = 1;
 
@@ -6511,7 +6519,7 @@ function Fatality:Loader(Config: Loader)
 		UIGradient.Parent = StartText
 
 		UIScale.Parent = StartText
-		UIScale.Scale = Config.Scale * 4;
+		UIScale.Scale = isMobile and (Config.Scale * 0.7) or Config.Scale
 
 		Fatality:CreateAnimation(StartText,0.45,{
 			TextTransparency = 0
@@ -6585,7 +6593,9 @@ function Fatality:CreateNotifier(): Notifier
 	layout.BorderColor3 = Color3.fromRGB(0, 0, 0)
 	layout.BorderSizePixel = 0
 	layout.Position = UDim2.new(1, -5, 0, 5)
-	layout.Size = UDim2.new(0, 150, 0, 50)
+	layout.Size = isMobile
+	and UDim2.new(0.6, 0, 0, 50)
+	or UDim2.new(0, 150, 0, 50)
 
 	UIListLayout.Parent = layout
 	UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
@@ -6641,7 +6651,9 @@ function Fatality:CreateNotifier(): Notifier
 			Icon.BorderColor3 = Color3.fromRGB(0, 0, 0)
 			Icon.BorderSizePixel = 0
 			Icon.Position = UDim2.new(0, 7, 0, 7)
-			Icon.Size = UDim2.new(0, 18, 0, 18)
+			Icon.Size = isMobile
+	and UDim2.new(0, 22, 0, 22)
+	or UDim2.new(0, 18, 0, 18)
 			Icon.Image = Fatality:GetIcon(Config.Icon);
 			Icon.ImageColor3 = Fatality.Colors.Main
 			Icon.ImageTransparency = 1
