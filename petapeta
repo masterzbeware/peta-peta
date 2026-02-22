@@ -2012,42 +2012,52 @@ end)
 		end
 	end
 
-	function page:Resize(scroll)
-		local padding = 10
-		local size = 0
+  function page:Resize(scroll)
+    local layout = self.container:FindFirstChildOfClass("UIListLayout")
+    local padding = 10
+    local size = 0
+  
+    if layout then
+      size = layout.AbsoluteContentSize.Y + padding
+    else
+      for _, section in pairs(self.sections) do
+        size = size + section.container.Parent.AbsoluteSize.Y + padding
+      end
+    end
+  
+    self.container.CanvasSize = UDim2.new(0, 0, 0, size)
+    self.container.ScrollBarImageTransparency = (size > self.container.AbsoluteSize.Y) and 0 or 1
+  
+    if scroll then
+      utility:Tween(self.container, {CanvasPosition = Vector2.new(0, self.lastPosition or 0)}, 0.2)
+    end
+  end
 
-		for i, section in pairs(self.sections) do
-			size = size + section.container.Parent.AbsoluteSize.Y + padding
-		end
-
-		self.container.CanvasSize = UDim2.new(0, 0, 0, size)
-		self.container.ScrollBarImageTransparency = size > self.container.AbsoluteSize.Y
-
-		if scroll then
-			utility:Tween(self.container, {CanvasPosition = Vector2.new(0, self.lastPosition or 0)}, 0.2)
-		end
-	end
-
-	function section:Resize(smooth)
-
-		if self.page.library.focusedPage ~= self.page then
-			return
-		end
-
-		local padding = 4
-		local size = (4 * padding) + self.container.Title.AbsoluteSize.Y -- offset
-
-		for i, module in pairs(self.modules) do
-			size = size + module.AbsoluteSize.Y + padding
-		end
-
-		if smooth then
-			utility:Tween(self.container.Parent, {Size = UDim2.new(1, -10, 0, size)}, 0.05)
-		else
-			self.container.Parent.Size = UDim2.new(1, -10, 0, size)
-			self.page:Resize()
-		end
-	end
+  function section:Resize(smooth)
+    if self.page.library.focusedPage ~= self.page then
+      return
+    end
+  
+    local padding = 4
+    local size = (4 * padding) + self.container.Title.AbsoluteSize.Y
+  
+    for _, module in pairs(self.modules) do
+      size = size + module.AbsoluteSize.Y + padding
+    end
+  
+    if smooth then
+      utility:Tween(self.container.Parent, {Size = UDim2.new(1, -10, 0, size)}, 0.05)
+  
+      task.delay(0.06, function()
+        if self.page and self.page.container and self.page.container.Parent then
+          self.page:Resize()
+        end
+      end)
+    else
+      self.container.Parent.Size = UDim2.new(1, -10, 0, size)
+      self.page:Resize()
+    end
+  end
 
 	function section:getModule(info)
 
