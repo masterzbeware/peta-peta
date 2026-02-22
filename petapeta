@@ -272,7 +272,11 @@ do
 							Padding = UDim.new(0, 10)
 						})
 					})
+
+          
 				}),
+
+        
 				utility:Create("ImageLabel", {
 					Name = "TopBar",
 					BackgroundTransparency = 1,
@@ -420,16 +424,36 @@ end)
 			BorderSizePixel = 0,
 			Position = UDim2.new(0, 134, 0, 46),
 			Size = UDim2.new(1, -142, 1, -56),
-			CanvasSize = UDim2.new(0, 0, 0, 466),
-			ScrollBarThickness = 3,
-			ScrollBarImageColor3 = themes.DarkContrast,
-			Visible = false
+      CanvasSize = UDim2.new(0, 0, 0, 0), -- awal kosong, nanti dihitung otomatis
+      ScrollingDirection = Enum.ScrollingDirection.Y,
+      ScrollingEnabled = true,
+      ScrollBarThickness = 3,
+      ScrollBarImageColor3 = themes.DarkContrast,
+      ScrollBarImageTransparency = 1, -- awalnya disembunyikan kalau belum perlu
+      Visible = false
 		}, {
 			utility:Create("UIListLayout", {
 				SortOrder = Enum.SortOrder.LayoutOrder,
 				Padding = UDim.new(0, 10)
 			})
 		})
+
+    local layout = container:FindFirstChildOfClass("UIListLayout")
+
+local function updatePageCanvas()
+	if not layout or not container.Parent then
+		return
+	end
+
+	local contentY = layout.AbsoluteContentSize.Y + 10
+	container.CanvasSize = UDim2.new(0, 0, 0, contentY)
+	container.ScrollBarImageTransparency = (contentY > container.AbsoluteSize.Y) and 0 or 1
+end
+
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvas)
+container:GetPropertyChangedSignal("AbsoluteSize"):Connect(updatePageCanvas)
+
+task.defer(updatePageCanvas)
 
 		return setmetatable({
 			library = library,
@@ -2029,7 +2053,7 @@ end)
     self.container.ScrollBarImageTransparency = (size > self.container.AbsoluteSize.Y) and 0 or 1
   
     if scroll then
-      utility:Tween(self.container, {CanvasPosition = Vector2.new(0, self.lastPosition or 0)}, 0.2)
+      self.container.CanvasPosition = Vector2.new(0, self.lastPosition or 0)
     end
   end
 
