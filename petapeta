@@ -212,32 +212,40 @@ do
 	-- new classes
 
 	function library.new(title)
-		local container = utility:Create("ScreenGui", {
-			Name = title,
-			Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-		}, {
+    local container = utility:Create("ScreenGui", {
+      Name = title,
+      Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"),
+      IgnoreGuiInset = true,
+      ResetOnSpawn = false,
+      ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    }, {
       utility:Create("ImageLabel", {
         Name = "Main",
         BackgroundTransparency = 1,
-        AnchorPoint = Vector2.new(0.5, 0.5), -- penting
-        Position = UDim2.new(0.5, 0, 0.5, 0), -- tengah layar
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(0.42, 0, 0.62, 0),
-				Image = "rbxassetid://4641149554",
-				ImageColor3 = themes.Background,
-				ScaleType = Enum.ScaleType.Slice,
-				SliceCenter = Rect.new(4, 4, 296, 296)
-			}, {
-				utility:Create("ImageLabel", {
-					Name = "Glow",
-					BackgroundTransparency = 1,
-					Position = UDim2.new(0, -15, 0, -15),
-					Size = UDim2.new(1, 30, 1, 30),
-					ZIndex = 0,
-					Image = "rbxassetid://5028857084",
-					ImageColor3 = themes.Glow,
-					ScaleType = Enum.ScaleType.Slice,
-					SliceCenter = Rect.new(24, 24, 276, 276)
-				}),
+        Image = "rbxassetid://4641149554",
+        ImageColor3 = themes.Background,
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(4, 4, 296, 296)
+      }, {
+        utility:Create("UISizeConstraint", {
+          MinSize = Vector2.new(340, 280),
+          MaxSize = Vector2.new(700, 520)
+        }),
+      
+        utility:Create("ImageLabel", {
+          Name = "Glow",
+          BackgroundTransparency = 1,
+          Position = UDim2.new(0, -15, 0, -15),
+          Size = UDim2.new(1, 30, 1, 30),
+          ZIndex = 0,
+          Image = "rbxassetid://5028857084",
+          ImageColor3 = themes.Glow,
+          ScaleType = Enum.ScaleType.Slice,
+          SliceCenter = Rect.new(24, 24, 276, 276)
+        }),
 				utility:Create("ImageLabel", {
 					Name = "Pages",
 					BackgroundTransparency = 1,
@@ -296,12 +304,37 @@ do
 		utility:InitializeKeybind()
 		utility:DraggingEnabled(container.Main.TopBar, container.Main)
 
+    local cam = workspace.CurrentCamera
+local uiScale = Instance.new("UIScale")
+uiScale.Parent = container.Main
+
+local function updateUIScale()
+	local viewport = cam and cam.ViewportSize or Vector2.new(1920, 1080)
+	local scale = math.clamp(math.min(viewport.X / 1920, viewport.Y / 1080), 0.75, 1.15)
+	uiScale.Scale = scale
+end
+
+updateUIScale()
+
+if cam then
+	cam:GetPropertyChangedSignal("ViewportSize"):Connect(updateUIScale)
+end
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+	cam = workspace.CurrentCamera
+	updateUIScale()
+	if cam then
+		cam:GetPropertyChangedSignal("ViewportSize"):Connect(updateUIScale)
+	end
+end)
+
     -- Floating button (tombol melayang)
     local floating = utility:Create("ImageButton", {
       Name = "FloatingButton",
       Parent = container,
       BackgroundTransparency = 1,
-      Position = UDim2.new(0, 15, 0.5, -25),
+      AnchorPoint = Vector2.new(0, 0.5),
+      Position = UDim2.new(0.02, 0, 0.5, 0),
       Size = UDim2.new(0, 50, 0, 50),
       ZIndex = 20,
       AutoButtonColor = false,
