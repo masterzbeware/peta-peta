@@ -416,22 +416,25 @@ end)
 			}) or {}
 		})
 
-		local container = utility:Create("ScrollingFrame", {
-			Name = title,
-			Parent = library.container.Main,
-			Active = true,
-			BackgroundTransparency = 1,
-			BorderSizePixel = 0,
-			Position = UDim2.new(0, 134, 0, 46),
-			Size = UDim2.new(1, -142, 1, -56),
-      CanvasSize = UDim2.new(0, 0, 0, 0), -- awal kosong, nanti dihitung otomatis
+    local container = utility:Create("ScrollingFrame", {
+      Name = title,
+      Parent = library.container.Main,
+      Active = true,
+      BackgroundTransparency = 1,
+      BorderSizePixel = 0,
+      Position = UDim2.new(0, 134, 0, 46),
+      Size = UDim2.new(1, -142, 1, -56),
+    
+      CanvasSize = UDim2.new(0, 0, 0, 0),
+      AutomaticCanvasSize = Enum.AutomaticSize.Y, -- <-- tambah ini
+    
       ScrollingDirection = Enum.ScrollingDirection.Y,
       ScrollingEnabled = true,
-      ScrollBarThickness = 3,
+      ScrollBarThickness = 8, -- <-- biar enak di mobile
       ScrollBarImageColor3 = themes.DarkContrast,
-      ScrollBarImageTransparency = 1, -- awalnya disembunyikan kalau belum perlu
+      ScrollBarImageTransparency = 1,
       Visible = false
-		}, {
+    }, {
 			utility:Create("UIListLayout", {
 				SortOrder = Enum.SortOrder.LayoutOrder,
 				Padding = UDim.new(0, 10)
