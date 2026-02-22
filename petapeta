@@ -422,8 +422,8 @@ end)
       Active = true,
       BackgroundTransparency = 1,
       BorderSizePixel = 0,
-      Position = UDim2.new(0, 134, 0, 46),
-      Size = UDim2.new(1, -142, 1, -56),
+      Position = UDim2.new(0, 134, 0, 42),
+      Size = UDim2.new(1, -142, 1, -46),
     
       CanvasSize = UDim2.new(0, 0, 0, 0),
       AutomaticCanvasSize = Enum.AutomaticSize.Y, -- <-- tambah ini
