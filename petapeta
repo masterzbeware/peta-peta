@@ -81,29 +81,29 @@ do
 
 		return new
 	end
-
-	function utility:Pop(object, shrink)
-		local clone = object:Clone()
-
-		clone.AnchorPoint = Vector2.new(0.5, 0.5)
-		clone.Size = clone.Size - UDim2.new(0, shrink, 0, shrink)
-		clone.Position = UDim2.new(0.5, 0, 0.5, 0)
-
-		clone.Parent = object
-		clone:ClearAllChildren()
-
-		object.ImageTransparency = 1
-		utility:Tween(clone, {Size = object.Size}, 0.2)
-
-		coroutine.wrap(function()
-			wait(0.2)
-
-			object.ImageTransparency = 0
-			clone:Destroy()
-		end)()
-
-		return clone
-	end
+  function utility:Pop(object, shrink)
+    local clone = object:Clone()
+    local oldTransparency = object.ImageTransparency or 0
+  
+    clone.AnchorPoint = Vector2.new(0.5, 0.5)
+    clone.Size = clone.Size - UDim2.new(0, shrink, 0, shrink)
+    clone.Position = UDim2.new(0.5, 0, 0.5, 0)
+  
+    clone.Parent = object
+    clone:ClearAllChildren()
+  
+    object.ImageTransparency = 1
+    utility:Tween(clone, {Size = object.Size}, 0.2)
+  
+    coroutine.wrap(function()
+      wait(0.2)
+  
+      object.ImageTransparency = oldTransparency -- balik ke nilai awal, bukan 0
+      clone:Destroy()
+    end)()
+  
+    return clone
+  end
 
 	function utility:InitializeKeybind()
 		self.keybinds = {}
@@ -296,25 +296,26 @@ do
 		utility:DraggingEnabled(container.Main.TopBar, container.Main)
 
     -- Floating button (tombol melayang)
-local floating = utility:Create("ImageButton", {
-	Name = "FloatingButton",
-	Parent = container,
-	BackgroundTransparency = 1,
-	Position = UDim2.new(0, 15, 0.5, -25),
-	Size = UDim2.new(0, 50, 0, 50),
-	ZIndex = 20,
-	AutoButtonColor = false,
-	Image = "rbxassetid://5028857472",
-	ImageColor3 = themes.Accent,
-	ScaleType = Enum.ScaleType.Slice,
-	SliceCenter = Rect.new(2, 2, 298, 298)
-}, {
+    local floating = utility:Create("ImageButton", {
+      Name = "FloatingButton",
+      Parent = container,
+      BackgroundTransparency = 1,
+      Position = UDim2.new(0, 15, 0.5, -25),
+      Size = UDim2.new(0, 50, 0, 50),
+      ZIndex = 20,
+      AutoButtonColor = false,
+      Image = "rbxassetid://5028857472",
+      ImageColor3 = themes.Accent,
+      ImageTransparency = 1, -- transparansi kotak
+      ScaleType = Enum.ScaleType.Slice,
+      SliceCenter = Rect.new(2, 2, 298, 298)
+    }, {
 	utility:Create("ImageLabel", {
 		Name = "Icon",
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(0, 100, 0, 100),
+		Size = UDim2.new(0, 70, 0, 70),
 		ZIndex = 21,
 		Image = "rbxassetid://89256853269073", -- icon menu
 		ImageColor3 = themes.TextColor
