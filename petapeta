@@ -214,7 +214,7 @@ do
 	function library.new(title)
 		local container = utility:Create("ScreenGui", {
 			Name = title,
-			Parent = game.CoreGui
+			Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 		}, {
 			utility:Create("ImageLabel", {
 				Name = "Main",
@@ -292,47 +292,50 @@ do
 			})
 		})
 
-    utility:InitializeKeybind()
-    utility:DraggingEnabled(container.Main.TopBar, container.Main)
-    
-    -- buat object library dulu
-    local lib = setmetatable({
-      container = container,
-      pagesContainer = container.Main.Pages.Pages_Container,
-      pages = {}
-    }, library)
-    
-    -- Floating Toggle Button
-    local floating = utility:Create("ImageButton", {
-      Name = "FloatingToggle",
-      Parent = container,
-      BackgroundTransparency = 1,
-      Size = UDim2.new(0, 50, 0, 50),
-      Position = UDim2.new(0, 30, 0.5, -25),
-      Image = "rbxassetid://5028857472",
-      ImageColor3 = themes.Accent,
-      ScaleType = Enum.ScaleType.Slice,
-      SliceCenter = Rect.new(2, 2, 298, 298),
-      ZIndex = 10
-    }, {
-      utility:Create("TextLabel", {
-        Name = "Text",
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0),
-        Font = Enum.Font.GothamBold,
-        Text = "UI",
-        TextColor3 = themes.TextColor,
-        TextSize = 16
-      })
-    })
-    
-    utility:DraggingEnabled(floating)
-    
-    floating.MouseButton1Click:Connect(function()
-      lib:toggle()
-    end)
-    
-    return lib
+		utility:InitializeKeybind()
+		utility:DraggingEnabled(container.Main.TopBar, container.Main)
+
+    -- Floating button (tombol melayang)
+local floating = utility:Create("ImageButton", {
+	Name = "FloatingButton",
+	Parent = container,
+	BackgroundTransparency = 1,
+	Position = UDim2.new(0, 15, 0.5, -25),
+	Size = UDim2.new(0, 50, 0, 50),
+	ZIndex = 20,
+	AutoButtonColor = false,
+	Image = "rbxassetid://5028857472",
+	ImageColor3 = themes.Accent,
+	ScaleType = Enum.ScaleType.Slice,
+	SliceCenter = Rect.new(2, 2, 298, 298)
+}, {
+	utility:Create("ImageLabel", {
+		Name = "Icon",
+		BackgroundTransparency = 1,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(0, 24, 0, 24),
+		ZIndex = 21,
+		Image = "rbxassetid://6031094678", -- icon menu
+		ImageColor3 = themes.TextColor
+	})
+})
+
+-- Biar tombolnya bisa digeser
+utility:DraggingEnabled(floating)
+
+-- Klik tombol = show/hide UI utama
+floating.MouseButton1Click:Connect(function()
+	utility:Pop(floating, 10)
+	container.Main.Visible = not container.Main.Visible
+end)
+
+		return setmetatable({
+			container = container,
+			pagesContainer = container.Main.Pages.Pages_Container,
+			pages = {}
+		}, library)
+	end
 
 	function page.new(library, title, icon)
 		local button = utility:Create("TextButton", {
